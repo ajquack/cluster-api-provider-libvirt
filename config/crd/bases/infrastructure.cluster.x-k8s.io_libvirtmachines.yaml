@@ -1,0 +1,94 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.2
+  name: libvirtmachines.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    kind: LibvirtMachine
+    listKind: LibvirtMachineList
+    plural: libvirtmachines
+    singular: libvirtmachine
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: LibvirtMachine is the Schema for the libvirtmachines API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LibvirtMachineSpec defines the desired state of LibvirtMachine.
+            properties:
+              autostart:
+                description: Enable autostart for the virtual machine
+                type: boolean
+              cloudInit:
+                description: Add a cloud init template to the virtual machine
+                properties:
+                  template:
+                    description: The cloud init template
+                    type: string
+                required:
+                - template
+                type: object
+              cpu:
+                description: Number of CPU cores to assign to the virtual machine
+                type: integer
+              memory:
+                description: Amount of memory to assign to the virtual machine
+                type: integer
+              networkUUID:
+                description: UUID of the network to attach the virtual machine to
+                type: string
+              volume:
+                description: Specifiy a volume block for the virtual machine
+                properties:
+                  baseVolumeID:
+                    type: string
+                  poolName:
+                    type: string
+                  volumeName:
+                    type: string
+                  volumeSize:
+                    type: integer
+                required:
+                - baseVolumeID
+                - poolName
+                - volumeName
+                - volumeSize
+                type: object
+            required:
+            - autostart
+            - cpu
+            - memory
+            - networkUUID
+            - volume
+            type: object
+          status:
+            description: LibvirtMachineStatus defines the observed state of LibvirtMachine.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
