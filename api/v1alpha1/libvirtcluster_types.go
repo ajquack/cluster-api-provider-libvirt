@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/errors"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -27,7 +26,7 @@ import (
 
 const (
 	// ClusterFinalizer allows cleaning up resources associated with a LibvirtCluster before deletion is completed.
-	ClusterFinalizer = "libvirtcluster.infrastructure.cluster.x-k8s.io"
+	ClusterFinalizer = "infrastructure.cluster.x-k8s.io/libvirtcluster"
 )
 
 // LibvirtClusterSpec defines the desired state of LibvirtCluster.
@@ -39,52 +38,15 @@ type LibvirtClusterSpec struct {
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self.port > 0 && self.port < 65536",message="port must be within 1-65535"
 	ControlPlaneEndpoint *clusterv1.APIEndpoint `json:"foo,omitempty"`
+	LibvirtSecret        LibvirtSecretRef       `json:"libvirtSecretRef"`
 }
 
 // LibvirtClusterStatus defines the observed state of LibvirtCluster.
 type LibvirtClusterStatus struct {
 	// Ready indicates that the cluster is ready.
-	// +optional
 	// +kubebuilder:default=false
-	Ready bool `json:"ready"`
-
-	// FailureReason will be set in the event that there is a terminal problem
-	// reconciling the Machine and will contain a succinct value suitable
-	// for machine interpretation.
-	//
-	// This field should not be set for transitive errors that a controller
-	// faces that are expected to be fixed automatically over
-	// time (like service outages), but instead indicate that something is
-	// fundamentally wrong with the Machine's spec or the configuration of
-	// the controller, and that manual intervention is required. Examples
-	// of terminal errors would be invalid combinations of settings in the
-	// spec, values that are unsupported by the controller, or the
-	// responsible controller itself being critically misconfigured.
-	//
-	// Any transient errors that occur during the reconciliation of ProxmoxCluster
-	// can be added as events to the ProxmoxCluster object and/or logged in the
-	// controller's output.
-	// +optional
-	FailureReason *errors.ClusterStatusError `json:"failureReason,omitempty"`
-
-	// FailureMessage will be set in the event that there is a terminal problem
-	// reconciling the Machine and will contain a more verbose string suitable
-	// for logging and human consumption.
-	//
-	// This field should not be set for transitive errors that a controller
-	// faces that are expected to be fixed automatically over
-	// time (like service outages), but instead indicate that something is
-	// fundamentally wrong with the Machine's spec or the configuration of
-	// the controller, and that manual intervention is required. Examples
-	// of terminal errors would be invalid combinations of settings in the
-	// spec, values that are unsupported by the controller, or the
-	// responsible controller itself being critically misconfigured.
-	//
-	// Any transient errors that occur during the reconciliation of ProxmoxMachines
-	// can be added as events to the ProxmoxCluster object and/or logged in the
-	// controller's output.
-	// +optional
-	FailureMessage *string `json:"failureMessage,omitempty"`
+	Ready      bool                 `json:"ready"`
+	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -106,6 +68,16 @@ type LibvirtClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []LibvirtCluster `json:"items"`
+}
+
+// GetConditions returns the observations of the operational state of the HetznerCluster resource.
+func (r *LibvirtCluster) GetConditions() clusterv1.Conditions {
+	return r.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the HetznerCluster to the predescribed clusterv1.Conditions.
+func (r *LibvirtCluster) SetConditions(conditions clusterv1.Conditions) {
+	r.Status.Conditions = conditions
 }
 
 func init() {

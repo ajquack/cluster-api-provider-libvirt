@@ -4,20 +4,54 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.2
-  name: libvirtclusters.infrastructure.cluster.x-k8s.io
+  name: Libvirtremediations.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
   names:
-    kind: LibvirtCluster
-    listKind: LibvirtClusterList
-    plural: libvirtclusters
-    singular: libvirtcluster
+    categories:
+    - cluster-api
+    kind: LibvirtRemediation
+    listKind: LibvirtRemediationList
+    plural: Libvirtremediations
+    shortNames:
+    - hcr
+    singular: libvirtremediation
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Timeout for the remediation
+      jsonPath: .spec.strategy.timeout
+      name: Timeout
+      type: string
+    - description: Phase of the remediation
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: Timestamp of the last remediation attempt
+      jsonPath: .status.lastRemediated
+      name: Last Remediated
+      type: string
+    - description: How many times remediation controller has tried to remediate the
+        node
+      jsonPath: .status.retryCount
+      name: Retry count
+      type: string
+    - description: How many times remediation controller should attempt to remediate
+        the node
+      jsonPath: .spec.strategy.retryLimit
+      name: Retry limit
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].reason
+      name: Reason
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
+      name: Message
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: LibvirtCluster is the Schema for the libvirtclusters API.
+        description: LibvirtRemediation is the Schema for the Libvirtremediations
+          API.
         properties:
           apiVersion:
             description: |-
@@ -37,57 +71,33 @@ spec:
           metadata:
             type: object
           spec:
-            description: LibvirtClusterSpec defines the desired state of LibvirtCluster.
+            description: LibvirtRemediationSpec defines the desired state of LibvirtRemediation
             properties:
-              foo:
-                description: ControlPlaneEndpoint represents the endpoint used to
-                  communicate with the control plane.
+              strategy:
+                description: Remediation is the remediation to apply.
                 properties:
-                  host:
-                    description: The hostname on which the API server is serving.
-                    type: string
-                  port:
-                    description: The port on which the API server is serving.
-                    format: int32
+                  retryLimit:
+                    description: RetryLimit sets the maximum number of remediation
+                      retries. Zero retries if not set.
                     type: integer
-                required:
-                - host
-                - port
-                type: object
-                x-kubernetes-validations:
-                - message: port must be within 1-65535
-                  rule: self.port > 0 && self.port < 65536
-              libvirtSecretRef:
-                properties:
-                  key:
-                    description: |-
-                      Key defines the keys that are used in the secret.
-                      Need to specify either HCloudToken or both HetznerRobotUser and HetznerRobotPassword.
-                    properties:
-                      libvirtURI:
-                        description: LibvirtURI is the key in the secret that contains
-                          the libvirt URI.
-                        type: string
-                    required:
-                    - libvirtURI
-                    type: object
-                  name:
-                    default: hetzner
-                    description: Name defines the name of the secret.
+                  timeout:
+                    description: Timeout sets the timeout between remediation retries.
+                      It should be of the form "10m", or "40s".
+                    type: string
+                  type:
+                    default: Reboot
+                    description: Type represents the type of the remediation strategy.
+                      At the moment, only "Reboot" is supported.
                     type: string
                 required:
-                - key
-                - name
+                - timeout
                 type: object
-            required:
-            - libvirtSecretRef
             type: object
           status:
-            description: LibvirtClusterStatus defines the observed state of LibvirtCluster.
+            description: LibvirtRemediationStatus defines the observed state of LibvirtRemediation.
             properties:
               conditions:
-                description: Conditions provide observations of the operational state
-                  of a Cluster API resource.
+                description: Conditions defines current service state of the LibvirtRemediation.
                 items:
                   description: Condition defines an observation of a Cluster API resource
                     operational state.
@@ -131,12 +141,20 @@ spec:
                   - type
                   type: object
                 type: array
-              ready:
-                default: false
-                description: Ready indicates that the cluster is ready.
-                type: boolean
-            required:
-            - ready
+              lastRemediated:
+                description: LastRemediated identifies when the host was last remediated
+                format: date-time
+                type: string
+              phase:
+                description: |-
+                  Phase represents the current phase of machine remediation.
+                  E.g. Pending, Running, Done etc.
+                type: string
+              retryCount:
+                description: |-
+                  RetryCount can be used as a counter during the remediation.
+                  Field can hold number of reboots etc.
+                type: integer
             type: object
         type: object
     served: true

@@ -8,13 +8,40 @@ metadata:
 spec:
   group: infrastructure.cluster.x-k8s.io
   names:
+    categories:
+    - cluster-api
     kind: LibvirtMachine
     listKind: LibvirtMachineList
     plural: libvirtmachines
+    shortNames:
+    - hcma
     singular: libvirtmachine
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Cluster to which this LibvirtMachine belongs
+      jsonPath: .metadata.labels.cluster\.x-k8s\.io/cluster-name
+      name: Cluster
+      type: string
+    - description: Machine object which owns with this LibvirtMachine
+      jsonPath: .metadata.ownerReferences[?(@.kind=="Machine")].name
+      name: Machine
+      type: string
+    - description: Phase of LibvirtMachine
+      jsonPath: .status.instanceState
+      name: Phase
+      type: string
+    - description: Time duration since creation of Libvirtmachine
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.conditions[?(@.type=='Ready')].reason
+      name: Reason
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
+      name: Message
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: LibvirtMachine is the Schema for the libvirtmachines API.
@@ -37,55 +64,125 @@ spec:
           metadata:
             type: object
           spec:
-            description: LibvirtMachineSpec defines the desired state of LibvirtMachine.
             properties:
               autostart:
-                description: Enable autostart for the virtual machine
-                type: boolean
-              cloudInit:
-                description: Add a cloud init template to the virtual machine
-                properties:
-                  template:
-                    description: The cloud init template
-                    type: string
-                required:
-                - template
-                type: object
-              cpu:
-                description: Number of CPU cores to assign to the virtual machine
-                type: integer
-              memory:
-                description: Amount of memory to assign to the virtual machine
-                type: integer
-              networkUUID:
-                description: UUID of the network to attach the virtual machine to
                 type: string
-              volume:
-                description: Specifiy a volume block for the virtual machine
-                properties:
-                  baseVolumeID:
-                    type: string
-                  poolName:
-                    type: string
-                  volumeName:
-                    type: string
-                  volumeSize:
-                    type: integer
-                required:
-                - baseVolumeID
-                - poolName
-                - volumeName
-                - volumeSize
-                type: object
+              cpu:
+                type: integer
+              diskImage:
+                items:
+                  properties:
+                    baseVolumeID:
+                      type: string
+                    poolName:
+                      type: string
+                    volumeSize:
+                      type: string
+                  required:
+                  - baseVolumeID
+                  - poolName
+                  - volumeSize
+                  type: object
+                type: array
+              memory:
+                type: integer
+              name:
+                type: string
+              networkInterfaces:
+                items:
+                  properties:
+                    bridge:
+                      type: string
+                    macAddress:
+                      type: string
+                    network:
+                      type: string
+                    networkType:
+                      type: string
+                  required:
+                  - bridge
+                  - network
+                  - networkType
+                  type: object
+                type: array
+              providerID:
+                description: ProviderID is the unique identifier as specified by the
+                  cloud provider.
+                type: string
             required:
             - autostart
             - cpu
+            - diskImage
             - memory
-            - networkUUID
-            - volume
+            - name
+            - networkInterfaces
             type: object
           status:
             description: LibvirtMachineStatus defines the observed state of LibvirtMachine.
+            properties:
+              conditions:
+                description: Conditions define the current service state of the LibvirtMachine.
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
+                      type: string
+                    reason:
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+              failureMessage:
+                description: |-
+                  FailureMessage will be set in the event that there is a terminal problem
+                  reconciling the Machine and will contain a more verbose string suitable
+                  for logging and human consumption.
+                type: string
+              failureReason:
+                description: |-
+                  FailureReason will be set in the event that there is a terminal problem
+                  reconciling the Machine and will contain a succinct value suitable
+                  for machine interpretation.
+                type: string
+              instanceState:
+                description: InstanceState is the state of the server for this machine.
+                type: string
+              ready:
+                description: Ready is true when the provider resource is ready.
+                type: boolean
             type: object
         type: object
     served: true

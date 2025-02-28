@@ -5,8 +5,37 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machines
+  - machines/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
+  - Libvirtmachinetemplates
   - libvirtclusters
   - libvirtmachines
   verbs:
@@ -20,16 +49,17 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
-  - libvirtclusters/finalizers
-  - libvirtmachines/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
+  - Libvirtmachinetemplates/status
   - libvirtclusters/status
   - libvirtmachines/status
   verbs:
   - get
   - patch
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - libvirtclusters/finalizers
+  - libvirtmachines/finalizers
+  verbs:
   - update

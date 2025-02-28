@@ -18,50 +18,78 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	errors "sigs.k8s.io/cluster-api/errors"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	MachineFinalizer = "infrastructure.cluster.x-k8s.io/libvirtmachine"
+)
 
-// LibvirtMachineSpec defines the desired state of LibvirtMachine.
 type LibvirtMachineSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Number of CPU cores to assign to the virtual machine
-	Cpu int `json:"cpu"`
-	// Amount of memory to assign to the virtual machine
-	Memory int `json:"memory"`
-	// Add a cloud init template to the virtual machine
-	CloudInit *CloudInit `json:"cloudInit,omitempty"`
-	// Specifiy a volume block for the virtual machine
-	Volume *Volume `json:"volume"`
-	// UUID of the network to attach the virtual machine to
-	NetworkUUID string `json:"networkUUID"`
-	// Enable autostart for the virtual machine
-	Autostart bool `json:"autostart"`
+	// ProviderID is the unique identifier as specified by the cloud provider.
+	// +optional
+	ProviderID        *string            `json:"providerID,omitempty"`
+	Name              string             `json:"name"`
+	CPU               int                `json:"cpu"`
+	Memory            int                `json:"memory"`
+	DiskImage         []DiskImage        `json:"diskImage"`
+	NetworkInterfaces []NetworkInterface `json:"networkInterfaces"`
+	Autostart         string             `json:"autostart"`
 }
 
-type CloudInit struct {
-	// The cloud init template
-	Template string `json:"template"`
-}
-
-type Volume struct {
+type DiskImage struct {
 	PoolName     string `json:"poolName"`
 	BaseVolumeID string `json:"baseVolumeID"`
-	VolumeName   string `json:"volumeName"`
-	VolumeSize   int    `json:"volumeSize"`
+	VolumeSize   string `json:"volumeSize"`
+}
+
+type NetworkInterface struct {
+	NetworkType string `json:"networkType"`
+	Network     string `json:"network"`
+	Bridge      string `json:"bridge"`
+	MACAddress  string `json:"macAddress,omitempty"`
 }
 
 // LibvirtMachineStatus defines the observed state of LibvirtMachine.
 type LibvirtMachineStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Ready is true when the provider resource is ready.
+	// +optional
+	Ready bool `json:"ready"`
+
+	// InstanceState is the state of the server for this machine.
+	// +optional
+	InstanceState *string `json:"instanceState,omitempty"`
+
+	// FailureReason will be set in the event that there is a terminal problem
+	// reconciling the Machine and will contain a succinct value suitable
+	// for machine interpretation.
+	// +optional
+	FailureReason *errors.MachineStatusError `json:"failureReason,omitempty"`
+
+	// FailureMessage will be set in the event that there is a terminal problem
+	// reconciling the Machine and will contain a more verbose string suitable
+	// for logging and human consumption.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// Conditions define the current service state of the LibvirtMachine.
+	// +optional
+	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
 
+// LibvirtMachine is the Schema for the libvirtmachines API.
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:path=libvirtmachines,scope=Namespaced,categories=cluster-api,shortName=hcma
+// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this LibvirtMachine belongs"
+// +kubebuilder:printcolumn:name="Machine",type="string",JSONPath=".metadata.ownerReferences[?(@.kind==\"Machine\")].name",description="Machine object which owns with this LibvirtMachine"
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.instanceState",description="Phase of LibvirtMachine"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Libvirtmachine"
+// +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
+// +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
+// +k8s:defaulter-gen=true
 
 // LibvirtMachine is the Schema for the libvirtmachines API.
 type LibvirtMachine struct {
@@ -70,6 +98,21 @@ type LibvirtMachine struct {
 
 	Spec   LibvirtMachineSpec   `json:"spec,omitempty"`
 	Status LibvirtMachineStatus `json:"status,omitempty"`
+}
+
+// LibvirtMachineSpec returns a DeepCopy.
+func (r *LibvirtMachine) LibvirtMachineSpec() *LibvirtMachineSpec {
+	return r.Spec.DeepCopy()
+}
+
+// GetConditions returns the observations of the operational state of the LibvirtMachine resource.
+func (r *LibvirtMachine) GetConditions() clusterv1.Conditions {
+	return r.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the LibvirtMachine to the predescribed clusterv1.Conditions.
+func (r *LibvirtMachine) SetConditions(conditions clusterv1.Conditions) {
+	r.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

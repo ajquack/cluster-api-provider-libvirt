@@ -47,6 +47,8 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/libvirt/libvirt-go v7.4.0+incompatible // indirect
+	github.com/libvirt/libvirt-go-xml v7.4.0+incompatible // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -90,6 +92,7 @@ require (
 	k8s.io/api v0.32.1 // indirect
 	k8s.io/apiextensions-apiserver v0.32.1 // indirect
 	k8s.io/apiserver v0.32.1 // indirect
+	k8s.io/cluster-bootstrap v0.31.3 // indirect
 	k8s.io/component-base v0.32.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
