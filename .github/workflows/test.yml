@@ -9,6 +9,9 @@ jobs:
     name: Run on Ubuntu
     runs-on: ubuntu-latest
     steps:
+      - name: Install libvirt
+        run: sudo apt-get install -y libvirt-dev
+
       - name: Clone the code
         uses: actions/checkout@v4
 
